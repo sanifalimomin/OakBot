@@ -1,5 +1,8 @@
 package oakbot.ai.stabilityai;
 
+import static oakbot.util.HttpStatusCode.ACCEPTED;
+import static oakbot.util.HttpStatusCode.OK;
+
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Optional;
@@ -73,7 +76,7 @@ public class StabilityAIClient {
 			try (var response = client.execute(request)) {
 				var statusCode = response.getStatusLine().getStatusCode();
 
-				if (statusCode == 200) {
+				if (statusCode == OK) {
 					return parseStableImageResponse(response);
 				}
 
@@ -125,7 +128,7 @@ public class StabilityAIClient {
 			try (var response = client.execute(request)) {
 				var statusCode = response.getStatusLine().getStatusCode();
 
-				if (statusCode == 200) {
+				if (statusCode == OK) {
 					return parseStableImageResponse(response);
 				}
 
@@ -159,7 +162,7 @@ public class StabilityAIClient {
 			try (var response = client.execute(request)) {
 				var statusCode = response.getStatusLine().getStatusCode();
 
-				if (statusCode == 200) {
+				if (statusCode == OK) {
 					return parseStableImageResponse(response);
 				}
 
@@ -249,7 +252,7 @@ public class StabilityAIClient {
 				var body = parseJsonResponse(response);
 
 				var statusCode = response.getStatusLine().getStatusCode();
-				if (statusCode == 200) {
+				if (statusCode == OK) {
 					return body.path("id").asText();
 				}
 
@@ -273,14 +276,14 @@ public class StabilityAIClient {
 			try (var response = client.execute(request)) {
 				var statusCode = response.getStatusLine().getStatusCode();
 
-				if (statusCode == 200) {
+				if (statusCode == OK) {
 					/*
 					 * Job done.
 					 */
 					return Optional.of(parseStableImageResponse(response));
 				}
 
-				if (statusCode == 202) {
+				if (statusCode == ACCEPTED) {
 					/*
 					 * Request still in progress.
 					 */
@@ -366,7 +369,7 @@ public class StabilityAIClient {
 				var body = parseJsonResponse(response);
 
 				var statusCode = response.getStatusLine().getStatusCode();
-				if (statusCode == 200) {
+				if (statusCode == OK) {
 					return body.path("id").asText();
 				}
 
@@ -390,14 +393,14 @@ public class StabilityAIClient {
 			try (var response = client.execute(request)) {
 				var statusCode = response.getStatusLine().getStatusCode();
 
-				if (statusCode == 200) {
+				if (statusCode == OK) {
 					/*
 					 * Job done.
 					 */
 					return Optional.of(parseStableImageResponse(response));
 				}
 
-				if (statusCode == 202) {
+				if (statusCode == ACCEPTED) {
 					/*
 					 * Request still in progress.
 					 */

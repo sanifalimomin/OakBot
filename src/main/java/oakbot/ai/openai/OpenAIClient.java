@@ -1,5 +1,6 @@
 package oakbot.ai.openai;
 
+import static oakbot.util.HttpStatusCode.OK;
 import static oakbot.util.JsonUtils.putIfNotNull;
 
 import java.awt.image.BufferedImage;
@@ -272,7 +273,7 @@ public class OpenAIClient {
 		try (var client = HttpFactory.connect().getClient()) {
 			try (var response = client.execute(request)) {
 				responseStatusCode = response.getStatusLine().getStatusCode();
-				if (responseStatusCode == 200) {
+				if (responseStatusCode == OK) {
 					return EntityUtils.toByteArray(response.getEntity());
 				}
 
@@ -414,7 +415,8 @@ public class OpenAIClient {
 
 		try {
 			requestLogger.log(requestMethod, requestUrl, requestBody, responseStatusCode, responseBody);
-		} catch (IOException ignore) {
+		} catch (IOException e) {
+			logger.atWarn().setCause(e).log(() -> "Failed to log HTTP request/response");
 		}
 	}
 
@@ -443,7 +445,7 @@ public class OpenAIClient {
 
 		try (var response = client.execute(request)) {
 			var status = response.getStatusLine().getStatusCode();
-			if (status != 200) {
+			if (status != OK) {
 				throw new IOException("Image URL returned HTTP " + status + ".");
 			}
 

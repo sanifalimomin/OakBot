@@ -114,7 +114,7 @@ public class JsonDatabase implements Database {
 		try {
 			return LocalDateTime.parse(text, dateTimeFormatter);
 		} catch (DateTimeParseException e) {
-			//not a date string
+			// Not a date string, return as plain text
 		}
 
 		return text;

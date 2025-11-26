@@ -205,119 +205,130 @@ public class ChatCommand {
 	}
 
 	private static CommandStringParts extractParts(String content) {
-		var firstWordBuffer = new StringBuilder();
-		var inTag = false;
-		var inTagName = false;
-		var inClosingTag = false;
-		var firstNonWhitespaceCharEncountered = false;
-		var tagNameStart = -1;
-		var startOfContent = -1;
-		String curTagName = null;
+		var parser = new CommandParser(content);
+		return parser.parse();
+	}
 
-		/*
-		 * Index 0: The tag name.
-		 * Index 1: The entire opening tag, including the <> characters and
-		 * attributes.
-		 */
-		var openTags = new LinkedList<String[]>();
+	private static class CommandParser {
+		private final String content;
+		private final StringBuilder firstWordBuffer = new StringBuilder();
+		private final LinkedList<String[]> openTags = new LinkedList<>();
+		private boolean inTag = false;
+		private boolean inTagName = false;
+		private boolean inClosingTag = false;
+		private boolean firstNonWhitespaceCharEncountered = false;
+		private int tagNameStart = -1;
+		private int startOfContent = -1;
+		private String curTagName = null;
 
-		var it = new CharIterator(content);
-		while (it.hasNext()) {
-			var c = it.next();
+		CommandParser(String content) {
+			this.content = content;
+		}
 
-			if (Character.isWhitespace(c)) {
-				if (!firstNonWhitespaceCharEncountered) {
-					/*
-					 * Ignore all whitespace at the beginning of the message.
-					 */
-					continue;
+		CommandStringParts parse() {
+			var it = new CharIterator(content);
+			while (it.hasNext()) {
+				var c = it.next();
+
+				if (handleWhitespace(c, it)) {
+					break;
 				}
 
-				if (inTag) {
-					/*
-					 * If we're inside of a tag name, this marks the end of the
-					 * tag name and the start of the tag's attributes.
-					 */
-					if (inTagName) {
-						curTagName = content.substring(tagNameStart, it.index());
-						openTags.add(new String[] { curTagName, null });
-						inTagName = false;
-					}
-					continue;
+				firstNonWhitespaceCharEncountered = true;
+
+				if (handleTagStart(c, it)) continue;
+				if (handleTagEnd(c, it)) continue;
+				if (handleClosingTagStart(c, it)) continue;
+
+				if (!inTag) {
+					firstWordBuffer.append(c);
 				}
-
-				/*
-				 * The first whitespace character signals the end of the command
-				 * name.
-				 */
-				startOfContent = it.index() + 1;
-				break;
 			}
 
-			firstNonWhitespaceCharEncountered = true;
+			var openTagsBeforeFirstWord = openTags.stream().map(tag -> tag[1]).toList();
+			return new CommandStringParts(openTagsBeforeFirstWord, firstWordBuffer.toString(), startOfContent);
+		}
 
-			if (c == '<') {
-				inTag = inTagName = true;
-				inClosingTag = false;
-				tagNameStart = it.index() + 1;
-				curTagName = null;
-				continue;
+		private boolean handleWhitespace(char c, CharIterator it) {
+			if (!Character.isWhitespace(c)) {
+				return false;
 			}
 
-			if (c == '>') {
-				if (curTagName == null) {
+			if (!firstNonWhitespaceCharEncountered) {
+				return false; // Continue loop
+			}
+
+			if (inTag) {
+				if (inTagName) {
 					curTagName = content.substring(tagNameStart, it.index());
-					if (!inClosingTag) {
-						openTags.add(new String[] { curTagName, null });
-					}
+					openTags.add(new String[] { curTagName, null });
+					inTagName = false;
 				}
-
-				if (inClosingTag) {
-					/*
-					 * Remove any tags from the list that start and end before
-					 * the command name is reached.
-					 */
-					while (!openTags.isEmpty()) {
-						var tag = openTags.removeLast();
-						if (tag[0].equals(curTagName)) {
-							break;
-						}
-					}
-				} else {
-					/*
-					 * Save the entire opening tag, including the <> characters
-					 * and attributes.
-					 */
-					var tag = openTags.getLast();
-					var entireOpenTag = content.substring(tagNameStart - 1, it.index() + 1);
-					tag[1] = entireOpenTag;
-				}
-
-				inTag = inTagName = inClosingTag = false;
-				continue;
+				return false; // Continue loop
 			}
 
-			if (c == '/' && it.prev() == '<') {
-				inClosingTag = true;
-				tagNameStart = it.index() + 1;
-				continue;
+			// First whitespace signals end of command name
+			startOfContent = it.index() + 1;
+			return true; // Break loop
+		}
+
+		private boolean handleTagStart(char c, CharIterator it) {
+			if (c != '<') {
+				return false;
 			}
 
-			if (!inTag) {
-				firstWordBuffer.append(c);
-				continue;
+			inTag = inTagName = true;
+			inClosingTag = false;
+			tagNameStart = it.index() + 1;
+			curTagName = null;
+			return true;
+		}
+
+		private boolean handleTagEnd(char c, CharIterator it) {
+			if (c != '>') {
+				return false;
+			}
+
+			if (curTagName == null) {
+				curTagName = content.substring(tagNameStart, it.index());
+				if (!inClosingTag) {
+					openTags.add(new String[] { curTagName, null });
+				}
+			}
+
+			if (inClosingTag) {
+				removeClosedTags();
+			} else {
+				saveOpeningTag(it);
+			}
+
+			inTag = inTagName = inClosingTag = false;
+			return true;
+		}
+
+		private void removeClosedTags() {
+			while (!openTags.isEmpty()) {
+				var tag = openTags.removeLast();
+				if (tag[0].equals(curTagName)) {
+					break;
+				}
 			}
 		}
 
-		//@formatter:off
-		var openTagsBeforeFirstWord = openTags.stream()
-			.map(tag -> tag[1])
-		.toList();
-		//@formatter:on
+		private void saveOpeningTag(CharIterator it) {
+			var tag = openTags.getLast();
+			var entireOpenTag = content.substring(tagNameStart - 1, it.index() + 1);
+			tag[1] = entireOpenTag;
+		}
 
-		var firstWord = firstWordBuffer.toString();
-
-		return new CommandStringParts(openTagsBeforeFirstWord, firstWord, startOfContent);
+		private boolean handleClosingTagStart(char c, CharIterator it) {
+			if (c == '/' && it.prev() == '<') {
+				inClosingTag = true;
+				tagNameStart = it.index() + 1;
+				return true;
+			}
+			return false;
+		}
 	}
 
 	private record CommandStringParts(List<String> openTagsBeforeFirstWord, String firstWord, int startOfContent) {

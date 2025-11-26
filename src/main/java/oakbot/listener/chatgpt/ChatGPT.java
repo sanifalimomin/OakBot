@@ -4,6 +4,7 @@ import static java.util.function.Predicate.not;
 import static oakbot.bot.ChatActions.create;
 import static oakbot.bot.ChatActions.doNothing;
 import static oakbot.bot.ChatActions.reply;
+import static oakbot.util.HttpStatusCode.OK;
 import static oakbot.util.StringUtils.plural;
 
 import java.io.IOException;
@@ -317,7 +318,8 @@ public class ChatGPT implements ScheduledTask, CatchAllMentionListener {
 				try {
 					roomName = room.getRoomInfo().getName();
 					roomNames.put(roomId, roomName);
-				} catch (IOException ignore) {
+				} catch (IOException e) {
+					logger.atWarn().setCause(e).log(() -> "Failed to get room name for room " + roomId);
 				}
 			}
 		}
@@ -445,7 +447,7 @@ public class ChatGPT implements ScheduledTask, CatchAllMentionListener {
 		}
 
 		var statusCode = response.getStatusLine().getStatusCode();
-		if (statusCode != 200) {
+		if (statusCode != OK) {
 			return false;
 		}
 

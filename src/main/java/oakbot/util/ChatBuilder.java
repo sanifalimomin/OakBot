@@ -11,8 +11,6 @@ import org.jsoup.select.NodeVisitor;
 
 import com.github.mangstadt.sochat4j.ChatMessage;
 
-import oakbot.bot.ChatCommand;
-
 /**
  * Helper class for building chat messages that are formatted in Stack Overflow
  * Chat markdown.
@@ -234,15 +232,7 @@ public class ChatBuilder implements CharSequence {
 		return reply(message.getMessageId());
 	}
 
-	/**
-	 * Formats the message as a reply.
-	 * @param command the parent message
-	 * @return this
-	 */
-	@Deprecated
-	public ChatBuilder reply(ChatCommand command) {
-		return reply(command.getMessage());
-	}
+
 
 	/**
 	 * Appends a tag.

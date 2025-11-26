@@ -75,62 +75,71 @@ public class GrootFilter extends ToggleableFilter {
 
 	private CharSequence grootSentence(boolean applyFormatting, GrootRng rng) {
 		var cb = new ChatBuilder();
-
 		var contraction = rng.useContractionForIAm();
-		for (var i = 0; i < grootWords.length; i++) {
-			var grootWord = grootWords[i];
 
-			if (i == AM && contraction) {
-				/*
-				 * Do not output "am" if the contraction "I'm" was used.
-				 */
+		for (var i = 0; i < grootWords.length; i++) {
+			if (shouldSkipWord(i, contraction)) {
 				continue;
 			}
 
-			/*
-			 * Insert space between each word.
-			 */
 			if (i > 0) {
 				cb.append(' ');
 			}
 
-			var bold = rng.formatBold();
-			var italic = rng.formatItalic();
-			if (applyFormatting) {
-				if (bold) {
-					cb.bold();
-				}
-
-				if (italic) {
-					cb.italic();
-				}
-			}
-
-			if (i == I && contraction) {
-				grootWord = "I'm";
-			}
-			if (i == GROOT) {
-				grootWord = rng.grootWithVariableOs();
-			}
-
-			if (rng.useCaps()) {
-				grootWord = grootWord.toUpperCase();
-			}
-
-			cb.append(grootWord);
-
-			if (applyFormatting) {
-				if (italic) {
-					cb.italic();
-				}
-
-				if (bold) {
-					cb.bold();
-				}
-			}
+			appendGrootWord(cb, i, contraction, applyFormatting, rng);
 		}
 
 		return cb.append(rng.endSentence());
+	}
+
+	private boolean shouldSkipWord(int index, boolean contraction) {
+		return index == AM && contraction;
+	}
+
+	private void appendGrootWord(ChatBuilder cb, int index, boolean contraction, boolean applyFormatting, GrootRng rng) {
+		var grootWord = getGrootWord(index, contraction, rng);
+		var bold = rng.formatBold();
+		var italic = rng.formatItalic();
+
+		applyOpeningFormatting(cb, applyFormatting, bold, italic);
+		cb.append(grootWord);
+		applyClosingFormatting(cb, applyFormatting, bold, italic);
+	}
+
+	private String getGrootWord(int index, boolean contraction, GrootRng rng) {
+		var word = grootWords[index];
+
+		if (index == I && contraction) {
+			word = "I'm";
+		} else if (index == GROOT) {
+			word = rng.grootWithVariableOs();
+		}
+
+		return rng.useCaps() ? word.toUpperCase() : word;
+	}
+
+	private void applyOpeningFormatting(ChatBuilder cb, boolean applyFormatting, boolean bold, boolean italic) {
+		if (!applyFormatting) {
+			return;
+		}
+		if (bold) {
+			cb.bold();
+		}
+		if (italic) {
+			cb.italic();
+		}
+	}
+
+	private void applyClosingFormatting(ChatBuilder cb, boolean applyFormatting, boolean bold, boolean italic) {
+		if (!applyFormatting) {
+			return;
+		}
+		if (italic) {
+			cb.italic();
+		}
+		if (bold) {
+			cb.bold();
+		}
 	}
 
 	private class GrootRng {

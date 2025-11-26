@@ -41,7 +41,7 @@ public class CliArguments {
 		return options.has("mock");
 	}
 
-	public String printHelp(String defaultContext) {
+	public String printHelp(String version, String url, String defaultContext) {
 		return """
 		OakBot v%s
 		by Michael Angstadt
@@ -74,6 +74,6 @@ public class CliArguments {
 		  Prints the version of this program.
 		
 		--help
-		  Prints this help message.""".formatted(Main.VERSION, Main.URL, defaultContext);
+		  Prints this help message.""".formatted(version, url, defaultContext);
 	}
 }

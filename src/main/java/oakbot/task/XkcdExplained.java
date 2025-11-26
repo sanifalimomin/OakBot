@@ -1,6 +1,7 @@
 package oakbot.task;
 
 import static oakbot.bot.ChatActions.doNothing;
+import static oakbot.util.HttpStatusCode.OK;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -156,7 +157,7 @@ public class XkcdExplained implements ScheduledTask, Listener {
 			 * If a wiki page for the comic has not been created
 			 * yet, the response status code will be 404.
 			 */
-			if (response.getStatusCode() != 200) {
+			if (response.getStatusCode() != OK) {
 				throw new IOException();
 			}
 

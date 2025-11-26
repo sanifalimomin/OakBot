@@ -156,7 +156,7 @@ public class EffectiveDebuggingCommand implements Command {
 			var item = items.get(itemNumber - 1);
 			return displayItem(chatCommand, item);
 		} catch (NumberFormatException e) {
-			//user did not enter an item number
+			// User did not enter an item number, treat as keyword search
 		}
 
 		/*

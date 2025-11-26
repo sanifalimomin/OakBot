@@ -18,7 +18,7 @@ import com.github.mangstadt.sochat4j.UserInfo;
  * A mock chat client that reads its chat messages from a text file.
  * @author Michael Angstadt
  */
-public class FileChatClient implements IChatClient {
+public class FileChatClient implements IChatClient, RoomContext {
 	private final AtomicLong eventIdCounter = new AtomicLong();
 	private final AtomicLong messageIdCounter = new AtomicLong();
 	private final List<FileChatRoom> rooms = new ArrayList<>();
@@ -71,7 +71,8 @@ public class FileChatClient implements IChatClient {
 		return room;
 	}
 
-	void leave(FileChatRoom room) {
+	@Override
+	public void notifyRoomLeft(FileChatRoom room) {
 		rooms.remove(room);
 	}
 

@@ -31,7 +31,7 @@ public class FileChatRoom implements IRoom {
 	private final int botUserId;
 	private final String botUsername;
 	private final UserInfo human;
-	private final FileChatClient connection;
+	private final RoomContext context;
 
 	private final Thread fileMonitor;
 	private final AtomicLong eventId;
@@ -40,15 +40,15 @@ public class FileChatRoom implements IRoom {
 
 	private Consumer<MessagePostedEvent> listener;
 
-	public FileChatRoom(int roomId, UserInfo human, Path inputFile, FileChatClient connection) {
+	public FileChatRoom(int roomId, UserInfo human, Path inputFile, RoomContext context) {
 		this.roomId = roomId;
 		this.human = human;
-		this.botUserId = connection.getUserId();
-		this.botUsername = connection.getUsername();
-		this.connection = connection;
+		this.botUserId = context.getUserId();
+		this.botUsername = context.getUsername();
+		this.context = context;
 
-		this.eventId = connection.getEventIdCounter();
-		this.messageId = connection.getMessageIdCounter();
+		this.eventId = context.getEventIdCounter();
+		this.messageId = context.getMessageIdCounter();
 
 		fileMonitor = new Thread(() -> {
 			try (var reader = new ChatRoomFileReader(inputFile)) {
@@ -219,7 +219,7 @@ public class FileChatRoom implements IRoom {
 
 	@Override
 	public List<UserInfo> getUserInfo(List<Integer> userIds) throws IOException {
-		return connection.getUserInfo(roomId, userIds);
+		return context.getUserInfo(roomId, userIds);
 	}
 
 	@Override
@@ -245,7 +245,7 @@ public class FileChatRoom implements IRoom {
 
 	@Override
 	public void leave() {
-		connection.leave(this);
+		context.notifyRoomLeft(this);
 		close();
 	}
 
