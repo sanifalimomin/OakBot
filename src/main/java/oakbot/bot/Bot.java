@@ -55,7 +55,6 @@ public class Bot implements IBot {
 	private static final Logger logger = LoggerFactory.getLogger(Bot.class);
 	static final int BOTLER_ID = 13750349;
 	
-	private static final int ROOM_JOIN_DELAY_MS = 2000;
     private static final Duration ROOM_JOIN_DELAY = Duration.ofSeconds(2);
 
 	private final BotConfiguration config;
