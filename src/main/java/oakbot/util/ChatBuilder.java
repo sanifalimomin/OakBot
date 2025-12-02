@@ -416,6 +416,51 @@ public class ChatBuilder implements CharSequence {
 		return markdown;
 	}
 
+	/**
+	 * Alters the username and content of a message if the message is a Botler
+	 * Discord relay message. Otherwise, returns the message unaltered.
+	 * @param message the original message
+	 * @return the altered message or the same message if it's not a relay
+	 * message
+	 * @see <a href=
+	 * "https://chat.stackoverflow.com/transcript/message/57337679#57337679">example</a>
+	 */
+	public static ChatMessage convertFromBotlerRelayMessage(ChatMessage message) {
+		final int BOTLER_ID = 13750349;
+		
+		if (message.getUserId() != BOTLER_ID) {
+			return message;
+		}
+
+		var content = message.getContent();
+		if (content == null) {
+			return message;
+		}
+
+		//Example message content:
+		//[<b><a href=\"https://discord.gg/PNMq3pBSUe\" rel=\"nofollow noopener noreferrer\">realmichael</a></b>] test
+		var html = content.getContent();
+		var dom = Jsoup.parse(html);
+		var element = dom.selectFirst("b a[href=\"https://discord.gg/PNMq3pBSUe\"]");
+		if (element == null) {
+			return message;
+		}
+		var discordUsername = element.text();
+
+		var endBracket = html.indexOf(']');
+		if (endBracket < 0) {
+			return message;
+		}
+		var discordMessage = html.substring(endBracket + 1).trim();
+
+		//@formatter:off
+		return new ChatMessage.Builder(message)
+			.username(discordUsername)
+			.content(discordMessage)
+		.build();
+		//@formatter:on
+	}
+
 	private static class MarkdownNodeVisitor implements NodeVisitor {
 		private final ChatBuilder chatBuilder = new ChatBuilder();
 		private final boolean includeTitleInLinks;

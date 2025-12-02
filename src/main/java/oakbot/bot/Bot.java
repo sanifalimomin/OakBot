@@ -217,7 +217,7 @@ public class Bot implements IBot {
 
 		//@formatter:off
 		return room.getMessages(count).stream()
-			.map(this::convertFromBotlerRelayMessage)
+			.map(ChatBuilder::convertFromBotlerRelayMessage)
 		.toList();
 		//@formatter:on
 	}
@@ -751,7 +751,7 @@ public class Bot implements IBot {
 				return;
 			}
 
-			message = convertFromBotlerRelayMessage(message);
+			message = ChatBuilder.convertFromBotlerRelayMessage(message);
 
 			timeOfLastMessageByRoom.put(message.getRoomId(), message.getTimestamp());
 
@@ -1096,49 +1096,6 @@ public class Bot implements IBot {
 				logger.atError().setCause(e).log(() -> "Problem posting delayed message [room=" + roomId + ", delay=" + message.delay() + "]: " + message.message());
 			}
 		}
-	}
-
-	/**
-	 * Alters the username and content of a message if the message is a Botler
-	 * Discord relay message. Otherwise, returns the message unaltered.
-	 * @param message the original message
-	 * @return the altered message or the same message if it's not a relay
-	 * message
-	 * @see <a href=
-	 * "https://chat.stackoverflow.com/transcript/message/57337679#57337679">example</a>
-	 */
-	private ChatMessage convertFromBotlerRelayMessage(ChatMessage message) {
-		if (message.getUserId() != BOTLER_ID) {
-			return message;
-		}
-
-		var content = message.getContent();
-		if (content == null) {
-			return message;
-		}
-
-		//Example message content:
-		//[<b><a href=\"https://discord.gg/PNMq3pBSUe\" rel=\"nofollow noopener noreferrer\">realmichael</a></b>] test
-		var html = content.getContent();
-		var dom = Jsoup.parse(html);
-		var element = dom.selectFirst("b a[href=\"https://discord.gg/PNMq3pBSUe\"]");
-		if (element == null) {
-			return message;
-		}
-		var discordUsername = element.text();
-
-		var endBracket = html.indexOf(']');
-		if (endBracket < 0) {
-			return message;
-		}
-		var discordMessage = html.substring(endBracket + 1).trim();
-
-		//@formatter:off
-		return new ChatMessage.Builder(message)
-			.username(discordUsername)
-			.content(discordMessage)
-		.build();
-		//@formatter:on
 	}
 
 	/**
